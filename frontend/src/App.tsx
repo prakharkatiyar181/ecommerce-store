@@ -1,34 +1,77 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Header } from './components/common/Header'
+import { Toast } from './components/common/Toast'
+import { ProductGrid } from './components/product/ProductGrid'
+import { CartModal } from './components/cart/CartModal'
+import { AdminDashboard } from './components/admin/AdminDashboard'
+import { useCart } from './hooks/useCart'
+import { useAdmin } from './hooks/useAdmin'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [showCart, setShowCart] = useState(false)
+  const [showAdmin, setShowAdmin] = useState(false)
+
+  const {
+    products,
+    cart,
+    loading,
+    message,
+    setMessage,
+    cartItemCount,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    checkout
+  } = useCart()
+
+  const { statistics, loadStatistics } = useAdmin()
+
+  const handleToggleAdmin = () => {
+    setShowAdmin(!showAdmin)
+    if (!showAdmin) {
+      loadStatistics()
+    }
+  }
+
+  const handleCheckout = (discountCode: string) => {
+    checkout(discountCode)
+    setShowCart(false)
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div>
+      <Toast message={message} onClose={() => setMessage({ type: '', text: '' })} />
+
+      <Header
+        showAdmin={showAdmin}
+        cartItemCount={cartItemCount}
+        onToggleAdmin={handleToggleAdmin}
+        onOpenCart={() => setShowCart(true)}
+      />
+
+      {!showAdmin ? (
+        <div className="container">
+          <h1>Products</h1>
+          <ProductGrid
+            products={products}
+            loading={loading}
+            onAddToCart={addToCart}
+          />
+        </div>
+      ) : (
+        <AdminDashboard statistics={statistics} />
+      )}
+
+      <CartModal
+        cart={cart}
+        products={products}
+        isOpen={showCart}
+        onClose={() => setShowCart(false)}
+        onUpdateQuantity={updateQuantity}
+        onRemoveItem={removeFromCart}
+        onCheckout={handleCheckout}
+      />
+    </div>
   )
 }
 
