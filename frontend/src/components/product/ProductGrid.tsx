@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { Product } from '../../types'
 import { ProductCard } from './ProductCard'
 import { LoadingSpinner } from '../common/LoadingSpinner'
@@ -8,7 +9,8 @@ interface ProductGridProps {
     onAddToCart: (productId: string) => void
 }
 
-export const ProductGrid = ({ products, loading, onAddToCart }: ProductGridProps) => {
+// Memoized to prevent re-renders when products haven't changed
+const ProductGridComponent = ({ products, loading, onAddToCart }: ProductGridProps) => {
     if (loading) {
         return <LoadingSpinner />
     }
@@ -25,3 +27,5 @@ export const ProductGrid = ({ products, loading, onAddToCart }: ProductGridProps
         </div>
     )
 }
+
+export const ProductGrid = memo(ProductGridComponent)

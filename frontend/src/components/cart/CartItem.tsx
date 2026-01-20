@@ -1,4 +1,5 @@
-import { type Product, type CartItem as CartItemType } from '../../types'
+import { memo, useCallback } from 'react'
+import type { Product, CartItem as CartItemType } from '../../types'
 import { Minus, Plus, Trash2 } from 'lucide-react'
 
 interface CartItemProps {
@@ -8,18 +9,20 @@ interface CartItemProps {
     onRemove: (productId: string) => void
 }
 
-export const CartItem = ({ item, product, onUpdateQuantity, onRemove }: CartItemProps) => {
-    const handleIncrement = () => {
+// Optimized cart item - only re-renders when its own data changes
+const CartItemComponent = ({ item, product, onUpdateQuantity, onRemove }: CartItemProps) => {
+    // Memoized handlers prevent unnecessary child re-renders
+    const handleIncrement = useCallback(() => {
         onUpdateQuantity(item.product_id, item.quantity + 1)
-    }
+    }, [item.product_id, item.quantity, onUpdateQuantity])
 
-    const handleDecrement = () => {
+    const handleDecrement = useCallback(() => {
         if (item.quantity > 1) {
             onUpdateQuantity(item.product_id, item.quantity - 1)
         } else {
             onRemove(item.product_id)
         }
-    }
+    }, [item.product_id, item.quantity, onUpdateQuantity, onRemove])
 
     return (
         <div className="cart-item">
@@ -59,3 +62,5 @@ export const CartItem = ({ item, product, onUpdateQuantity, onRemove }: CartItem
         </div>
     )
 }
+
+export const CartItem = memo(CartItemComponent)

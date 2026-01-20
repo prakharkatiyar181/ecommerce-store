@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Statistics } from '../types'
 import { adminApi } from '../services/api'
 
+// Admin hook - manages statistics and discount code generation
 export const useAdmin = () => {
     const [statistics, setStatistics] = useState<Statistics | null>(null)
 

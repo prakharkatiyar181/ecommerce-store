@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import type { Cart, Product, DiscountCodeInfo } from '../../types'
 import { CartItem } from './CartItem'
 import { ShoppingCart, X, Tag, Check, AlertCircle } from 'lucide-react'
@@ -14,7 +14,8 @@ interface CartModalProps {
     onCheckout: (discountCode: string) => void
 }
 
-export const CartModal = ({
+// Memoized cart modal with discount code handling
+const CartModalComponent = ({
     cart,
     products,
     isOpen,
@@ -47,7 +48,7 @@ export const CartModal = ({
         }
     }
 
-    const handleApplyCoupon = () => {
+    const handleApplyCoupon = useCallback(() => {
         if (!discountCode.trim()) {
             setCouponError('Please enter a code')
             return
@@ -62,29 +63,30 @@ export const CartModal = ({
             setAppliedCode(null)
             setCouponError('Invalid coupon code')
         }
-    }
+    }, [discountCode, availableCodes])
 
-    const handleRemoveCoupon = () => {
+    const handleRemoveCoupon = useCallback(() => {
         setAppliedCode(null)
         setDiscountCode('')
         setCouponError(null)
-    }
+    }, [cart?.items, products])
 
     if (!isOpen) return null
 
-    const getCartTotal = () => {
+    // Memoized cart total - only recalculates when items or discount changes
+    const cartTotal = useMemo(() => {
         if (!cart || !cart.items.length) return 0
         return cart.items.reduce((total, item) => {
             const product = products.find(p => p.id === item.product_id)
             return total + (product?.price || 0) * item.quantity
         }, 0)
-    }
+    }, [cart, products])
 
-    const handleCheckout = () => {
+    const handleCheckout = useCallback(() => {
         onCheckout(appliedCode || '')
         setDiscountCode('')
         setAppliedCode(null)
-    }
+    }, [appliedCode, onCheckout])
 
     return (
         <div className="modal-overlay" onClick={onClose}>
@@ -206,12 +208,12 @@ export const CartModal = ({
                             <div className="order-summary">
                                 <div className="summary-row">
                                     <span>Subtotal</span>
-                                    <span>${getCartTotal().toFixed(2)}</span>
+                                    <span>${cartTotal.toFixed(2)}</span>
                                 </div>
                                 {appliedCode && (
                                     <div className="summary-row" style={{ color: 'var(--success)' }}>
                                         <span>Discount (10%)</span>
-                                        <span>-${(getCartTotal() * 0.1).toFixed(2)}</span>
+                                        <span>-${(cartTotal * 0.1).toFixed(2)}</span>
                                     </div>
                                 )}
                                 <div className="summary-row summary-total">
@@ -224,12 +226,12 @@ export const CartModal = ({
                                                 color: 'var(--text-secondary)',
                                                 fontWeight: 'normal'
                                             }}>
-                                                ${getCartTotal().toFixed(2)}
+                                                ${cartTotal.toFixed(2)}
                                             </span>
-                                            <span>${(getCartTotal() * 0.9).toFixed(2)}</span>
+                                            <span>${(cartTotal * 0.9).toFixed(2)}</span>
                                         </div>
                                     ) : (
-                                        <span>${getCartTotal().toFixed(2)}</span>
+                                        <span>${cartTotal.toFixed(2)}</span>
                                     )}
                                 </div>
                             </div>
@@ -248,3 +250,5 @@ export const CartModal = ({
         </div>
     )
 }
+
+export const CartModal = memo(CartModalComponent)

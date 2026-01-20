@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react'
 import type { Product } from '../../types'
 
 interface ProductCardProps {
@@ -5,7 +6,13 @@ interface ProductCardProps {
     onAddToCart: (productId: string) => void
 }
 
-export const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
+// Memoized product card - only re-renders if product or callback changes
+const ProductCardComponent = ({ product, onAddToCart }: ProductCardProps) => {
+    // Stable callback reference prevents child re-renders
+    const handleClick = useCallback(() => {
+        onAddToCart(product.id)
+    }, [product.id, onAddToCart])
+
     return (
         <div className="product-card">
             <img src={product.image_url} alt={product.name} className="product-image" />
@@ -15,7 +22,7 @@ export const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                 <div className="product-price">${product.price.toFixed(2)}</div>
                 <button
                     className="btn btn-primary"
-                    onClick={() => onAddToCart(product.id)}
+                    onClick={handleClick}
                     style={{ width: '100%' }}
                 >
                     Add to Cart
@@ -24,3 +31,5 @@ export const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
         </div>
     )
 }
+
+export const ProductCard = memo(ProductCardComponent)

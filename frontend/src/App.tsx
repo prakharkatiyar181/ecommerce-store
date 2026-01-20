@@ -1,11 +1,14 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { Header } from './components/common/Header'
 import { Toast } from './components/common/Toast'
 import { ProductGrid } from './components/product/ProductGrid'
-import { CartModal } from './components/cart/CartModal'
-import { AdminDashboard } from './components/admin/AdminDashboard'
+import { LoadingSpinner } from './components/common/LoadingSpinner'
 import { useCart } from './hooks/useCart'
 import { useAdmin } from './hooks/useAdmin'
+
+// Lazy load heavy components - faster initial page load
+const CartModal = lazy(() => import('./components/cart/CartModal').then(module => ({ default: module.CartModal })))
+const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })))
 
 function App() {
   const [showCart, setShowCart] = useState(false)
@@ -59,18 +62,25 @@ function App() {
           />
         </div>
       ) : (
-        <AdminDashboard statistics={statistics} />
+        <Suspense fallback={<LoadingSpinner />}>
+          <AdminDashboard statistics={statistics} />
+        </Suspense>
       )}
 
-      <CartModal
-        cart={cart}
-        products={products}
-        isOpen={showCart}
-        onClose={() => setShowCart(false)}
-        onUpdateQuantity={updateQuantity}
-        onRemoveItem={removeFromCart}
-        onCheckout={handleCheckout}
-      />
+      {/* Only load cart when opened */}
+      {showCart && (
+        <Suspense fallback={null}>
+          <CartModal
+            cart={cart}
+            products={products}
+            isOpen={showCart}
+            onClose={() => setShowCart(false)}
+            onUpdateQuantity={updateQuantity}
+            onRemoveItem={removeFromCart}
+            onCheckout={handleCheckout}
+          />
+        </Suspense>
+      )}
     </div>
   )
 }
